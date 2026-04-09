@@ -1,11 +1,10 @@
 
-""""Trabalho Discretas 2. Implementação árvore de cobertura
-Grupo: Gabriel Garib Gomes, Marcus Novais Ferrari, Fabrício Sassaki """
+"""Discrete Math 2 project. Coverability tree implementation.
+Group: Gabriel Garib Gomes, Marcus Novais Ferrari, Fabrício Sassaki."""
 
 import numpy as np
 
-np.printoptions(nanstr="NAN", infstr="INF")
-
+#Example Petri net with 4 places and 4 transitions
 x0=np.array([1,1,0,1])
 ain=np.array([[0,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
 aout=np.array([[0,1,0,0],[0,0,1,0],[0,0,0,1],[1,0,0,0]])
@@ -13,47 +12,45 @@ aout=np.array([[0,1,0,0],[0,0,1,0],[0,0,0,1],[1,0,0,0]])
 
 
 def PetriToCoveringTree(m0,Ain, Aout):
-    x0=m0.astype(float) #converte o vetor de marcação inicial para float, para permitir a representação de infinito
+    x0=m0.astype(float) # convert initial marking vector to float to allow infinity representation
     m0=m0.astype(float)
     tree=[]
-    #define um limite para o número de tokens, para evitar loops infinitos
+    # define a token limit to avoid infinite loops
     maxcaptoken=10*np.max(m0) 
-    print("Limite de tokens definido como:", maxcaptoken)
     if x0.any()<0 or Ain.any()<0 or Aout.any()<0 or x0.any()== np.inf or Ain.any()==np.inf or Aout.any()==np.inf or x0.any()== np.nan or Ain.any()==np.nan or Aout.any()==np.nan:
-        print("Vetores inválidos, não podem conter valores negativos, infinitos ou NaN")
+        print("Invalid vectors: values cannot be negative, infinite, or NaN")
         return None
     if Ain.shape!=Aout.shape:
-        print("Matriz de entrada e saída devem ter o mesmo número de linhas")
+        print("Input and output matrices must have the same number of rows")
         return None
     if len(x0)!=Ain.shape[1]:
-        print("Vetor de marcação inicial deve ter o mesmo número de colunas que as matrizes de entrada e saída")
+        print("Initial marking vector must have the same number of columns as input/output matrices")
         return None
    
     while True:
         m0past=m0
-        for i in range(len(Ain)):           #percorre os lugares da rede de petri
-            for j in range(len(Ain[0])):        #percorre as transições da rede de petri
-                if m0[j]>= Ain[i][j]: #verifica se a transição é habilitada
-                    if (m0-Ain[i]+Aout[i]).any()<0: #verifica se a marcação resultante da transição é válida (não pode ter tokens negativos)
+        for i in range(len(Ain)):           # iterate through Petri net places
+            for j in range(len(Ain[0])):        # iterate through Petri net transitions
+                if m0[j]>= Ain[i][j]: # check whether transition is enabled
+                    if (m0-Ain[i]+Aout[i]).any()<0: # check if resulting marking is valid (cannot have negative tokens)
                         continue
-                    edge=[m0.tolist()]#cria uma aresta (x,t,x')
-                    if m0[j]>maxcaptoken: #verifica se a marcação ultrapassou o limite definido
-                        m0[j]=np.inf #se ultrapassou, define a marcação como infinito
+                    edge=[m0.tolist()]# create an edge (x,t,x')
+                    if m0[j]>maxcaptoken: # check if marking exceeded the defined limit
+                        m0[j]=np.inf # if exceeded, set marking to infinity
                         edge.append('t'+str(int(i)))
                         edge.append(m0.tolist()) 
                         tree.append(edge)
-                        return tree   
-                        print("deu infinito aq")
+                        return tree  
                     else:
-                        m0=m0-Ain[i]+Aout[i]#atualiza a marcação    
+                        m0=m0-Ain[i]+Aout[i]# update marking    
                     edge.append('t'+str(int(i)))
                     edge.append(m0.tolist())
-                    if edge not in tree: #verifica se a aresta já foi adicionada à árvore
+                    if edge not in tree: # check whether edge was already added to the tree
                         tree.append(edge)
-        # if tree.any()==np.inf: #verifica se a árvore contém alguma marcação infinita, o que indica que a rede é ilimitada
-        #     print("A rede é ilimitada")
+        # if tree.any()==np.inf: # checks whether tree has infinite marking, indicating an unbounded net
+        #     print("The net is unbounded")
         #     return tree
-        if np.array_equal(m0past, m0): #verifica se a marcação não mudou, ou seja, se não há mais transições habilitadas
+        if np.array_equal(m0past, m0): # check whether marking did not change (no more enabled transitions)
             break
         
 

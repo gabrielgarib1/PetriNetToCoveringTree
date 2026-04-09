@@ -1,0 +1,13 @@
+# Linux (bash)
+# python3 -m venv .venv
+# source .venv/bin/activate
+# pip install -r requirements.txt
+# deactivate --> just when you want to exit the virtual environment
+
+# Windows (CMD)
+# py -m venv .venv
+# .venv\Scripts\activate
+# pip install -r requirements.txt
+# deactivate --> just when you want to exit the virtual environment
+
+numpy
