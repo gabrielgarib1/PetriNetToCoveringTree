@@ -10,27 +10,39 @@ ain=np.array([[0,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
 aout=np.array([[0,1,0,0],[0,0,1,0],[0,0,0,1],[1,0,0,0]])
 
 
-
+"""This algorithm has a linear arquitecture, it doesnt consider ramifications in the three.(linked list solution)"""
 def PetriToCoveringTree(m0,Ain, Aout):
     x0=m0.astype(float) # convert initial marking vector to float to allow infinity representation
     m0=m0.astype(float)
     tree=[]
     # define a token limit to avoid infinite loops
     maxcaptoken=10*np.max(m0) 
+
+
+    """Any inst working properly, syntax error"""
+
+
     if x0.any()<0 or Ain.any()<0 or Aout.any()<0 or x0.any()== np.inf or Ain.any()==np.inf or Aout.any()==np.inf or x0.any()== np.nan or Ain.any()==np.nan or Aout.any()==np.nan:
         print("Invalid vectors: values cannot be negative, infinite, or NaN")
         return None
     if Ain.shape!=Aout.shape:
         print("Input and output matrices must have the same number of rows")
         return None
-    if len(x0)!=Ain.shape[1]:
-        print("Initial marking vector must have the same number of columns as input/output matrices")
+    if len(x0)!=Ain.shape[0]:
+        print("Initial marking vector must have the same number of lines as input/output matrices")
         return None
    
+
+    """The infinite logical in the code is inproperly implemented,
+     it should check dominance between nodes """
+    """Infinite values shouldn't stop the loop, because there are more reachable markigns to be explored,
+    it should check for duplicate markigns and look for blocking nodes to stop the loop."""
     while True:
         m0past=m0
         for i in range(len(Ain)):           # iterate through Petri net places
             for j in range(len(Ain[0])):        # iterate through Petri net transitions
+
+                """some error here that i didnt understand, probably."""
                 if m0[j]>= Ain[i][j]: # check whether transition is enabled
                     if (m0-Ain[i]+Aout[i]).any()<0: # check if resulting marking is valid (cannot have negative tokens)
                         continue
