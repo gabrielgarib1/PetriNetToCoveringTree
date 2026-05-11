@@ -3,7 +3,7 @@
 Group: Gabriel Garib Gomes, Marcus Novais Ferrari, Fabrício Sassaki."""
 
 import numpy as np
-import net_to_nparray
+import cl_node
 
 #Example Petri net with 4 places and 4 transitions
 x0=np.array([1,0,0,0])
@@ -43,40 +43,48 @@ def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualizatio
         return str(e)
    
 
-    """The infinite logical in the code is inproperly implemented,
-     it should check dominance between nodes """
     """Infinite values shouldn't stop the loop, because there are more reachable markigns to be explored,
     it should check for duplicate markigns and look for blocking nodes to stop the loop."""
+    tree=[]
+    nodes=[]
+    n=cl_node.cl_linked_list_node(x0)
+    
     while True:
-        x0past=x0
-        for i in range(len(Ain)):           # iterate through Petri net places
-            for j in range(len(Ain[0])):        # iterate through Petri net transitions
+        habilited_transitions=[] # list to store enabled transitions for the current node
+        for i in range(Ain.shape[0]):           # iterate through Petri net transitions
 
-                """some error here that i didnt understand, probably."""
-                if x0[j]>= Ain[i][j]: # check whether transition is enabled
-                    if (x0-Ain[i]+Aout[i]).any()<0: # check if resulting marking is valid (cannot have negative tokens)
-                        continue
-                    edge=[x0.tolist()]# create an edge (x,t,x')
-                    if x0[j]>maxcaptoken: # check if marking exceeded the defined limit
-                        x0[j]=np.inf # if exceeded, set marking to infinity
-                        edge.append('t'+str(int(i)))
-                        edge.append(x0.tolist()) 
-                        tree.append(edge)
-                        return tree  
-                    else:
-                        x0=x0-Ain[i]+Aout[i]# update marking    
-                    edge.append('t'+str(int(i)))
-                    edge.append(x0.tolist())
-                    if edge not in tree: # check whether edge was already added to the tree
-                        tree.append(edge)
+            if np.all(x0>= Ain[i]): # check whether transition is enabled
+                habilited_transitions.append(i) # if enabled, add transition to the list
+        if len(habilited_transitions)==0:
+            return tree # if no transitions are enabled, return the tree
+            
+        possible_node=n.marking-Ain[i]+Aout[i] # calculate the possible next marking after firing transition i
+        if possible_node not in nodes: # check if the possible next marking is already in the tree 
+            #check dominance
+            
+            if np.any( np.all(possible_node >= nodes, axis=1)& np.any(possible_node > nodes, axis=1) ):
+                np.where(possible_node > nodes) # find the index of the dominated node
+                
+                pass #implement np.inf where dominance is detected
+
+
+            n.add_link(i, possible_node) # if it is, add a link to the existing node
+            nodes.append(possible_node) # add the new marking to the list of nodes
+            '''move the line bellow to the end of the loop to add the path after all transitions have been 
+            checked this way, we can avoid adding paths that lead to already existing nodes,
+            which would create duplicates in the tree.'''
+            tree.append(n.get_path()) #  this line                
+                
+                # x0=x0-Ain[i]+Aout[i]# update marking    
+
+
         # if tree.any()==np.inf: # checks whether tree has infinite marking, indicating an unbounded net
         #     print("The net is unbounded")
         #     return tree
-        if np.array_equal(x0past, x0): # check whether marking did not change (no more enabled transitions)
-            break
+
         
 
-    return tree
+        
 
 a=PetriToCoveringTree(x0,ain,aout)
 # print(a)
