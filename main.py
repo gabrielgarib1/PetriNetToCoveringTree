@@ -7,14 +7,22 @@ from class_datastruc import*
 
 #Example Petri net with 4 places and 4 transitions
 x0=np.array([1,0,0,0])
-ain=np.array([[1,0,0,0],
-              [0,1,0,0],
-              [0,0,1,0],
-              [0,0,0,1]])
-aout=np.array([[0,1,0,0],
-               [0,0,1,0],
-               [0,0,0,1],
-               [1,0,0,0]])
+
+
+ain = np.array([
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, 0, 1, 0],
+    [0, 0, 0, 1]
+])
+
+# O que cada transição produz: t1 produz em p2, t4 fecha o ciclo produzindo em p1
+aout = np.array([
+    [0, 0, 0, 1],
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, 0, 1, 0]
+])
 
 # path="/home/arabe/Documents/UFSC/PetriNets/test.ndr"
 # Ain, Aout,x0 = net_to_nparray.carregar_matrizes_tina(path)
@@ -53,39 +61,56 @@ def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualizatio
     it should check for duplicate markigns and look for blocking nodes to stop the loop."""
 
     tree=[]
-    nodes_global=[]
+    nodes_global=[x0.tolist()]
    
     stack_markings=stack() # stack to keep track of the nodes to be explored
-    stack_markings.push(x0) # start with the initial marking
+    root_node=cl_linked_list_node(x0.tolist()) # create the root node of the tree with the initial marking
+    stack_markings.push(root_node) # start with the initial marking
 
 
     while not stack_markings.is_empty():
         habilited_transitions=[] # list to store enabled transitions for the current node
-        x=stack_markings.pop() # get the next marking to explore
-        for i in range(Ain.shape[0]):           # iterate through Petri net transitions
+        current_node = stack_markings.pop()
+        x=np.array(current_node.marking) # get the next marking to explore
+        for i in range(Ain.shape[1]):           # iterate through Petri net transitions
 
-            if np.all(x>= Ain[i]): # check whether transition is enabled
+            if np.all(x>= Ain[:,i]): # check whether transition is enabled
                 habilited_transitions.append(i) # if enabled, add transition to the list
-                
+
         for i in habilited_transitions: # iterate through enabled transitions
 
-            possible_node=n.marking-Ain[i]+Aout[i] # calculate the possible next marking after firing transition i
-            if possible_node not in nodes_global: # check if the possible next marking is already in the tree 
-                #check dominance
-                dominated_mask=np.all(possible_node >= nodes_global, axis=1)& np.any(possible_node > nodes_global, axis=1)
-                if np.any( dominated_mask ):
-                    dominated_ancestors=nodes_global[dominated_mask]#substituir pelos nós ancestrais da lista encadeada
-                    places_to_omega=np.any(possible_node > dominated_ancestors, axis=0) # find which places of the possible_node are greater than the dominated ancestors
-                    possible_node[places_to_omega]=np.inf # set those places to infinity in the possible_node marking
-                n.add_ancestor(n.marking) # add the current marking as an ancestor of the new node
-                nodes_global.append(possible_node) # add the new marking to the global list of nodes
-                n.add_link(i, possible_node) # add a link to the new node with the transition that leads to it
+            possible_node = x - Ain[:,i] + Aout[:,i] # calculate the possible next marking
+            ancestors_array = np.array(current_node.ancestors)
+            
+            # --- 1. PRIMEIRO: Checar dominância e aplicar Ômega ---
+            # Isso DEVE acontecer antes de qualquer verificação global
+            if len(ancestors_array) > 0: 
+                dominated_mask = np.all(possible_node >= ancestors_array, axis=1) & np.any(possible_node > ancestors_array, axis=1)
+                if np.any(dominated_mask):
+                    dominated_ancestors = ancestors_array[dominated_mask]
+                    places_to_omega = np.any(possible_node > dominated_ancestors, axis=0) 
+                    possible_node[places_to_omega] = np.inf 
+            
+            possible_node_list = possible_node.tolist()
 
+            # --- 2. SEGUNDO: Registrar a aresta ---
+            # A aresta deve ser registrada MESMO QUE o nó já tenha sido visitado (para mostrar os loops da rede)
+            edge = [current_node.marking, f't{i+1}', possible_node_list]
+            if edge not in tree: # Evita arestas perfeitamente duplicadas
+                tree.append(edge)
+                current_node.add_link(i, possible_node_list)
 
-                '''move the line bellow to the end of the loop to add the path after all transitions have been 
-                checked this way, we can avoid adding paths that lead to already existing nodes,
-                which would create duplicates in the tree.'''
-                tree.append(n.get_triple()) #  this line                
+            # --- 3. TERCEIRO: Explorar se for inédito ---
+            if possible_node_list not in nodes_global: 
+                nodes_global.append(possible_node_list) 
+                
+                child_node = cl_linked_list_node(possible_node_list) 
+                child_node.ancestors = current_node.ancestors.copy() 
+                child_node.add_ancestor(current_node.marking) 
+                stack_markings.push(child_node)
+    return tree
+
+                           
                 
 
         
