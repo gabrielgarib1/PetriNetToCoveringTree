@@ -9,23 +9,31 @@ from class_datastruc import*
 x0=np.array([1,0,0,0])
 
 
-ain = np.array([
-    [1, 0, 0, 0],
-    [0, 1, 0, 0],
-    [0, 0, 1, 0],
-    [0, 0, 0, 1]
-])
+# ain = np.array([
+#     [1, 0, 0, 0],
+#     [0, 1, 0, 0],
+#     [0, 0, 1, 0],
+#     [0, 0, 0, 1]
+# ])
 
-aout = np.array([
-    [0, 0, 0, 1],
-    [1, 0, 0, 0],
-    [0, 1, 0, 0],
-    [0, 0, 1, 0]
-])
+# aout = np.array([
+#     [0, 0, 0, 1],
+#     [1, 0, 0, 0],
+#     [0, 1, 0, 0],
+#     [0, 0, 1, 0]
+# ])
 
+ain= np.array([[1, 0, 0],
+               [0, 1, 1],
+               [0, 0, 1],
+               [0, 0, 0]])
 
+aout = np.array([[0, 1, 0],
+                [1, 0, 0],
+                [1, 0, 1],
+                [0, 0, 1]])
 
-def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualization later
+def PetriToCoveringTree(x0,Ain, Aout):  #implement visualization later
     """Build a coverability tree for a Petri net.
 
     The algorithm explores reachable markings, records enabled transitions,
@@ -117,11 +125,23 @@ def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualizatio
 
 a=PetriToCoveringTree(x0,ain,aout)
 
+# if isinstance(a, str):
+#     print(a) 
+# else:
+    
+#     for i in a:
+#         print(i, '\n\n', end='')
+
+
 if isinstance(a, str):
     print(a) 
 else:
-    
-    for i in a:
-        print(i, '\n\n', end='')
-
+    print("--- Arestas da Árvore de Cobertura ---")
+    for edge in a:
+        # Formata os floats para inteiros e o 'inf' para o símbolo ômega
+        origem = [int(v) if v != np.inf else 'ω' for v in edge[0]]
+        destino = [int(v) if v != np.inf else 'ω' for v in edge[2]]
+        transicao = edge[1]
+        
+        print(f"Origem: {origem} --({transicao})--> Destino: {destino}")
 
