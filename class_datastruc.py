@@ -4,6 +4,11 @@ import numpy as np
 
 
 class cl_linked_list_node:
+    """Node used while exploring the coverability tree.
+
+    Each node stores the current marking, the transitions taken from it,
+    and the markings of its ancestor chain so omega detection can be applied.
+    """
     def __init__(self, init_marking):
         self.marking=init_marking
         self.x_t_xnew=[]
@@ -23,6 +28,7 @@ class cl_linked_list_node:
 
 
 class stack:
+    """Simple LIFO stack used to traverse the tree without recursion."""
     def __init__(self):
         self.stack=[]
     

@@ -16,7 +16,6 @@ ain = np.array([
     [0, 0, 0, 1]
 ])
 
-# O que cada transição produz: t1 produz em p2, t4 fecha o ciclo produzindo em p1
 aout = np.array([
     [0, 0, 0, 1],
     [1, 0, 0, 0],
@@ -24,19 +23,20 @@ aout = np.array([
     [0, 0, 1, 0]
 ])
 
-# path="/home/arabe/Documents/UFSC/PetriNets/test.ndr"
-# Ain, Aout,x0 = net_to_nparray.carregar_matrizes_tina(path)
 
 
-"""This algorithm has a linear arquitecture, it doesnt consider ramifications in the three.
-(linked list solution)"""
 def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualization later
+    """Build a coverability tree for a Petri net.
+
+    The algorithm explores reachable markings, records enabled transitions,
+    and replaces growing components with infinity when a marking dominates
+    one of its ancestors.
+    """
     x0=x0.astype(float) # convert initial marking vector to float to allow infinity representation
     tree=[]
-    # define a token limit to avoid infinite loops
+    # Input validation keeps the traversal logic focused on the Petri-net rules.
  
-    """Raise execptions in case of invalid matrices, such as negative values, infinite values, NaN values, 
-    or incompatible dimensions."""
+
 
     try:
         if np.any(x0 != np.floor(x0)) or np.any(Ain != np.floor(Ain)) or np.any(Aout != np.floor(Aout)):
@@ -57,12 +57,11 @@ def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualizatio
         return str(e)
    
 
-    """Infinite values shouldn't stop the loop, because there are more reachable markigns to be explored,
-    it should check for duplicate markigns and look for blocking nodes to stop the loop."""
 
     tree=[]
     nodes_global=[x0.tolist()]
    
+    # Explore depth-first so the tree can be built with a small explicit stack.
     stack_markings=stack() # stack to keep track of the nodes to be explored
     root_node=cl_linked_list_node(x0.tolist()) # create the root node of the tree with the initial marking
     stack_markings.push(root_node) # start with the initial marking
@@ -82,9 +81,9 @@ def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualizatio
             possible_node = x - Ain[:,i] + Aout[:,i] # calculate the possible next marking
             ancestors_array = np.array(current_node.ancestors)
             
-            # --- 1. PRIMEIRO: Checar dominância e aplicar Ômega ---
-            # Isso DEVE acontecer antes de qualquer verificação global
+
             if len(ancestors_array) > 0: 
+                # If the new marking grows beyond an ancestor, mark the growth as omega.
                 dominated_mask = np.all(possible_node >= ancestors_array, axis=1) & np.any(possible_node > ancestors_array, axis=1)
                 if np.any(dominated_mask):
                     dominated_ancestors = ancestors_array[dominated_mask]
@@ -93,14 +92,13 @@ def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualizatio
             
             possible_node_list = possible_node.tolist()
 
-            # --- 2. SEGUNDO: Registrar a aresta ---
-            # A aresta deve ser registrada MESMO QUE o nó já tenha sido visitado (para mostrar os loops da rede)
+
             edge = [current_node.marking, f't{i+1}', possible_node_list]
-            if edge not in tree: # Evita arestas perfeitamente duplicadas
+            if edge not in tree: 
                 tree.append(edge)
                 current_node.add_link(i, possible_node_list)
 
-            # --- 3. TERCEIRO: Explorar se for inédito ---
+
             if possible_node_list not in nodes_global: 
                 nodes_global.append(possible_node_list) 
                 
@@ -118,9 +116,9 @@ def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualizatio
         
 
 a=PetriToCoveringTree(x0,ain,aout)
-# print(a)
+
 if isinstance(a, str):
-    print(a)  # Print the error message if a string is returned 
+    print(a) 
 else:
     
     for i in a:
