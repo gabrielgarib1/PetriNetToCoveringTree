@@ -3,12 +3,18 @@
 Group: Gabriel Garib Gomes, Marcus Novais Ferrari, Fabrício Sassaki."""
 
 import numpy as np
-import cl_node
+from class_datastruc import*
 
 #Example Petri net with 4 places and 4 transitions
 x0=np.array([1,0,0,0])
-ain=np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
-aout=np.array([[0,1,0,0],[0,0,1,0],[0,0,0,1],[1,0,0,0]])
+ain=np.array([[1,0,0,0],
+              [0,1,0,0],
+              [0,0,1,0],
+              [0,0,0,1]])
+aout=np.array([[0,1,0,0],
+               [0,0,1,0],
+               [0,0,0,1],
+               [1,0,0,0]])
 
 # path="/home/arabe/Documents/UFSC/PetriNets/test.ndr"
 # Ain, Aout,x0 = net_to_nparray.carregar_matrizes_tina(path)
@@ -20,7 +26,7 @@ def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualizatio
     x0=x0.astype(float) # convert initial marking vector to float to allow infinity representation
     tree=[]
     # define a token limit to avoid infinite loops
-    maxcaptoken=10*np.max(x0) 
+ 
     """Raise execptions in case of invalid matrices, such as negative values, infinite values, NaN values, 
     or incompatible dimensions."""
 
@@ -45,42 +51,42 @@ def PetriToCoveringTree(x0,Ain, Aout, visualize=False):  #implement visualizatio
 
     """Infinite values shouldn't stop the loop, because there are more reachable markigns to be explored,
     it should check for duplicate markigns and look for blocking nodes to stop the loop."""
+
     tree=[]
-    nodes=[]
-    n=cl_node.cl_linked_list_node(x0)
-    
-    while True:
+    nodes_global=[]
+   
+    stack_markings=stack() # stack to keep track of the nodes to be explored
+    stack_markings.push(x0) # start with the initial marking
+
+
+    while not stack_markings.is_empty():
         habilited_transitions=[] # list to store enabled transitions for the current node
+        x=stack_markings.pop() # get the next marking to explore
         for i in range(Ain.shape[0]):           # iterate through Petri net transitions
 
-            if np.all(x0>= Ain[i]): # check whether transition is enabled
+            if np.all(x>= Ain[i]): # check whether transition is enabled
                 habilited_transitions.append(i) # if enabled, add transition to the list
-        if len(habilited_transitions)==0:
-            return tree # if no transitions are enabled, return the tree
-            
-        possible_node=n.marking-Ain[i]+Aout[i] # calculate the possible next marking after firing transition i
-        if possible_node not in nodes: # check if the possible next marking is already in the tree 
-            #check dominance
-            
-            if np.any( np.all(possible_node >= nodes, axis=1)& np.any(possible_node > nodes, axis=1) ):
-                np.where(possible_node > nodes) # find the index of the dominated node
                 
-                pass #implement np.inf where dominance is detected
+        for i in habilited_transitions: # iterate through enabled transitions
+
+            possible_node=n.marking-Ain[i]+Aout[i] # calculate the possible next marking after firing transition i
+            if possible_node not in nodes_global: # check if the possible next marking is already in the tree 
+                #check dominance
+                dominated_mask=np.all(possible_node >= nodes_global, axis=1)& np.any(possible_node > nodes_global, axis=1)
+                if np.any( dominated_mask ):
+                    dominated_ancestors=nodes_global[dominated_mask]#substituir pelos nós ancestrais da lista encadeada
+                    places_to_omega=np.any(possible_node > dominated_ancestors, axis=0) # find which places of the possible_node are greater than the dominated ancestors
+                    possible_node[places_to_omega]=np.inf # set those places to infinity in the possible_node marking
+                n.add_ancestor(n.marking) # add the current marking as an ancestor of the new node
+                nodes_global.append(possible_node) # add the new marking to the global list of nodes
+                n.add_link(i, possible_node) # add a link to the new node with the transition that leads to it
 
 
-            n.add_link(i, possible_node) # if it is, add a link to the existing node
-            nodes.append(possible_node) # add the new marking to the list of nodes
-            '''move the line bellow to the end of the loop to add the path after all transitions have been 
-            checked this way, we can avoid adding paths that lead to already existing nodes,
-            which would create duplicates in the tree.'''
-            tree.append(n.get_path()) #  this line                
+                '''move the line bellow to the end of the loop to add the path after all transitions have been 
+                checked this way, we can avoid adding paths that lead to already existing nodes,
+                which would create duplicates in the tree.'''
+                tree.append(n.get_triple()) #  this line                
                 
-                # x0=x0-Ain[i]+Aout[i]# update marking    
-
-
-        # if tree.any()==np.inf: # checks whether tree has infinite marking, indicating an unbounded net
-        #     print("The net is unbounded")
-        #     return tree
 
         
 
