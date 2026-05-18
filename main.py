@@ -1,6 +1,6 @@
 
 """Discrete Math 2 project. Coverability tree implementation.
-Group: Gabriel Garib Gomes, Marcus Novais Ferrari, Fabrício Sassaki."""
+Group: Gabriel Garib Gomes and Marcus Novais Ferrari."""
 
 import numpy as np
 from class_datastruc import*
